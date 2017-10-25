@@ -1,16 +1,24 @@
 package com.boscotec.crypyocompare;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.boscotec.crypyocompare.api.ApiClient;
 import com.boscotec.crypyocompare.api.IApi;
+
+import java.util.ArrayList;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -24,27 +32,28 @@ import timber.log.Timber;
 
 public class CreateCardActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    Boolean ready= false;
     TextView amount;
+    SharedPreferences sharedPref = null;
+    SharedPreferences.Editor editor = null;
+    RadioButton  rb_btc;
+    RadioButton  rb_eth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_createcard);
+        if(getSupportActionBar()!=null)
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        amount = findViewById(R.id.amount);
-        Spinner from = findViewById(R.id.spinnerfrom);
-        Spinner to = findViewById(R.id.spinnerto);
-        Button save = findViewById(R.id.save);
+        amount = (TextView) findViewById(R.id.amount);
+        rb_btc = (RadioButton)findViewById(R.id.rb_btc);
+        rb_eth = (RadioButton)findViewById(R.id.rb_eth);
+        final Spinner to = (Spinner) findViewById(R.id.spinnerto);
+        Button save = (Button) findViewById(R.id.save);
 
-        //   ArrayList<String> fromCurrencies = new ArrayList<>();
-        // ArrayAdapter<String> fromCurrenciesAdapter = new ArrayAdapter<>(this, R.layout.spinnerlayout, fromCurrencies);
-        ArrayAdapter<CharSequence> fromCurrenciesAdapter = ArrayAdapter.createFromResource(this, R.array.fro_array, R.layout.spinnerlayout);
-        fromCurrenciesAdapter.setDropDownViewResource(R.layout.spinnerlayout);
-        from.setAdapter(fromCurrenciesAdapter);
-        from.setOnItemSelectedListener(this);
+        sharedPref = getSharedPreferences(getString(R.string.shared_pref_cryptocompare), Context.MODE_PRIVATE);
+        editor = sharedPref.edit();
 
-       // ArrayAdapter<String> toCurrenciesAdapter = new ArrayAdapter<>(this, R.layout.spinnerlayout, fromCurrencies);
         ArrayAdapter<CharSequence> toCurrenciesAdapter = ArrayAdapter.createFromResource(this, R.array.to_array, R.layout.spinnerlayout);
         toCurrenciesAdapter.setDropDownViewResource(R.layout.spinnerlayout);
         to.setAdapter(toCurrenciesAdapter);
@@ -53,21 +62,53 @@ public class CreateCardActivity extends AppCompatActivity implements AdapterView
         save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Timber.d("Onclick of button");
+               Timber.d("Onclick of button");
+                String currency_selected = to.getSelectedItem().toString().trim();
+                if(rb_btc.isChecked()) {
+                    if(!checkIfExists("BTC", currency_selected)) {
+                        addCard("BTC", currency_selected);
+                    }else{
+                        Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+                    }
+                }else if(rb_eth.isChecked()){
+                    if(!checkIfExists("ETH", currency_selected)) {
+                        addCard("ETH", currency_selected);
+                    }else{
+                        Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+                    }
+                }
+
             }
         });
     }
 
 
+    public boolean checkIfExists(String from_currency, String to_currency) {
+        int all_saved = sharedPref.getInt("num_saved", 0);
+        for(int i=0; i<all_saved; i++){
+            if(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR).equals(from_currency+","+to_currency)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addCard(String from_currency,  String to_currency) {
+        int all_saved = sharedPref.getInt("num_saved", 0);
+        editor.putInt("num_saved", all_saved+1);
+        editor.putString("saved_"+all_saved, from_currency+","+to_currency);
+        editor.commit();
+        Toast.makeText(this, "save successful", Toast.LENGTH_LONG).show();
+    }
+
+
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if(parent.getId() == R.id.spinnerfrom){
-            ready = true;
-        } else if(parent.getId() == R.id.spinnerto){
-            if(ready){
-                Timber.d("Ready to go online");
-                //amount.setText(BuildConfig.API_BASE_URL);
-                //convert("BTC", "ETH");
+        if(parent.getId() == R.id.spinnerto){
+            Timber.d("Ready to go online");
+            if(rb_btc.isChecked()) {
+
+            }else if(rb_eth.isChecked()){
 
             }
         }

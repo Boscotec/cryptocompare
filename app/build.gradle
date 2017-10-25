@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 project.ext {
-    supportLibraryVersion = "26.1.0"
+    supportLibraryVersion = "26.0.0-alpha1"
     timberVersion = "4.5.1"
 }
 
@@ -45,11 +45,6 @@ dependencies {
 
     // Timber
     compile "com.jakewharton.timber:timber:$project.timberVersion"
-
-    // Room Database
-    compile "android.arch.persistence.room:runtime:$rootProject.roomVersion"
-    compile "android.arch.persistence.room:rxjava2:$rootProject.roomVersion"
-    annotationProcessor "android.arch.persistence.room:compiler:$rootProject.roomVersion"
 
     //Retrofit
     compile 'com.squareup.retrofit2:retrofit:2.2.0'

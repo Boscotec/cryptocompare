@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:state_checked="true">
+    <shape>
+        <corners android:topLeftRadius="@dimen/radio_edge" android:bottomLeftRadius="@dimen/radio_edge" android:topRightRadius="@dimen/radio_edge" android:bottomRightRadius="@dimen/radio_edge"/>
+        <padding android:bottom="@dimen/radio_edge" android:left="@dimen/radio_edge" android:right="@dimen/radio_edge" android:top="@dimen/radio_edge" />
+        <solid android:color="@color/colorAccent" />
+    </shape>
+</item>
+
+<item android:state_pressed="true">
+    <shape>
+        <corners android:topLeftRadius="@dimen/radio_edge" android:bottomLeftRadius="@dimen/radio_edge" android:topRightRadius="@dimen/radio_edge" android:bottomRightRadius="@dimen/radio_edge" />
+        <solid android:color="#00000000" />
+        <stroke android:width="2dp" android:color="@color/colorAccent" />
+        <padding android:bottom="@dimen/radio_edge" android:left="@dimen/radio_edge" android:right="@dimen/radio_edge" android:top="@dimen/radio_edge" />
+    </shape>
+</item>
+
+<item>
+    <shape>
+        <corners android:topLeftRadius="@dimen/radio_edge" android:bottomLeftRadius="@dimen/radio_edge" android:topRightRadius="@dimen/radio_edge" android:bottomRightRadius="@dimen/radio_edge"/>
+        <stroke android:width="2dp" android:color="@color/colorAccent" />
+        <padding android:bottom="@dimen/radio_edge" android:left="@dimen/radio_edge" android:right="@dimen/radio_edge" android:top="@dimen/radio_edge" />
+    </shape>
+</item>
+</selector>

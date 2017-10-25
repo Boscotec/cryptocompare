@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <array name="fro_array">
-        <item>BTC</item>
-        <item>ETH</item>
-    </array>
     <array name="to_array">
         <item>BTC</item>
         <item>ETH</item>

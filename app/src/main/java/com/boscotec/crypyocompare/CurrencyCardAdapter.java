@@ -19,12 +19,12 @@ import timber.log.Timber;
  * Created by Johnbosco on 16-Oct-17.
  */
 
-public class CardAdapter extends RecyclerView.Adapter<CardAdapter.ViewHolder> {
+public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapter.ViewHolder> {
 
     ArrayList<String> currencies;
     private Context context;
 
-    public CardAdapter(Context context, ArrayList<String> currencies) {
+    public CurrencyCardAdapter(Context context, ArrayList<String> currencies) {
         this.context = context;
         this.currencies = currencies;
     }
@@ -42,20 +42,20 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.ViewHolder> {
   //      final StudentPerformanceDataModel dataModel = dataModels.get(position);
 
         holder.amount.setText("$10000.900");
-        ArrayAdapter<String> currenciesAdapter = new ArrayAdapter<>(context, R.layout.spinnerlayout, currencies);
-        currenciesAdapter.setDropDownViewResource(R.layout.spinnerlayout);
-        holder.spinner.setAdapter(currenciesAdapter);
-        holder.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        //ArrayAdapter<String> currenciesAdapter = new ArrayAdapter<>(context, R.layout.spinnerlayout, currencies);
+        //currenciesAdapter.setDropDownViewResource(R.layout.spinnerlayout);
+        //holder.spinner.setAdapter(currenciesAdapter);
+        //holder.spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        //    @Override
+         //   public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-            }
+         //   }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+          //  @Override
+         //   public void onNothingSelected(AdapterView<?> parent) {
 
-            }
-        });
+         //   }
+       // });
 
         holder.close.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,14 +71,12 @@ public class CardAdapter extends RecyclerView.Adapter<CardAdapter.ViewHolder> {
         ImageView close;
         ImageView icon;
         TextView amount;
-        Spinner spinner;
 
         public ViewHolder(View view) {
             super(view);
             amount = view.findViewById(R.id.amount);
             close = view.findViewById(R.id.close);
             icon = view.findViewById(R.id.icon);
-            spinner = view.findViewById(R.id.spinner);
         }
     }
 }

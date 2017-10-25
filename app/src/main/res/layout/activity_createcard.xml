@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
-    <android.support.v7.widget.CardView xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android"
-        app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="5dp"
-        android:layout_width="match_parent" android:layout_height="match_parent">
-        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:background="@color/cardview_shadow_start_color"
+    android:gravity="center" android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="match_parent">
 
+    <android.support.v7.widget.CardView  app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="5dp" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
         <TextView android:id="@+id/amount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -12,57 +11,78 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="20dp"
                 android:textColor="@color/black"
-                android:text="$5677.98"
+                android:text="@string/app_name"
                 android:textSize="25sp"/>
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        <LinearLayout android:orientation="horizontal" android:padding="10dp" android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <RadioGroup
+                    android:id="@+id/radioGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginLeft="2dp"
+                    android:gravity="start">
 
-        <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/black"
-                android:layout_margin="10dp"
-                android:text="From: "
-                android:textSize="20sp"/>
+                    <RadioButton
+                        android:id="@+id/rb_btc"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/btc"
+                        android:textColor="@color/white"
+                        android:background="@drawable/radio_button"
+                        android:button="@color/transparent"
+                        android:checked="true"
+                        android:layout_margin="2dp"
+                        />
 
-            <Spinner
-                android:id="@+id/spinnerfrom"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:layout_gravity="center"
-                android:layout_marginBottom="20dp"
-                />
+                    <RadioButton
+                        android:id="@+id/rb_eth"
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/eth"
+                        android:textColor="@color/white"
+                        android:background="@drawable/radio_button"
+                        android:button="@color/transparent"
+                        android:layout_margin="2dp"
+                        />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/black"
-                android:layout_margin="10dp"
-                android:text="To: "
-                android:textSize="20sp"/>
+                </RadioGroup>
 
-            <Spinner
-                android:id="@+id/spinnerto"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="10dp"
-                />
+                <TextView
+                    android:text="To"
+                    android:textColor="@color/black"
+                    android:textSize="20sp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
 
-        </LinearLayout>
+                <Spinner
+                    android:id="@+id/spinnerto"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="10dp"
+                    />
 
+            </LinearLayout>
         <Button android:id="@+id/save"
-            android:text="Save"
-            android:layout_marginTop="20dp"
+            android:text="@string/save"
+            android:textColor="@color/white"
+            android:layout_marginTop="10dp"
             android:layout_marginRight="10dp"
+            android:background="@drawable/button"
             android:layout_gravity="end"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-
         </LinearLayout>
     </android.support.v7.widget.CardView>
 
