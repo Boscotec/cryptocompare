@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <array name="to_array">
-
         <item>AED</item>
         <item>AUD</item>
         <item>ARS</item>

@@ -32,17 +32,9 @@ import retrofit2.Response;
 
 public class ConversionActivity extends AppCompatActivity {
 
-//    private String CRYPTO_TYPE = "BTC";
-//    private int CRYPTO_POSITION =0;
     SharedPreferences sharedPref = null;
     SharedPreferences.Editor editor = null;
     EditText from_currency, to_currency;
-//    public String BASE_CURRENCY = "BTC";
-//    public String QUOTE_CURRENCY = "USD";
-//    private String CURRENCY_SYMBOL = "";
-//    public String CRYPTO_URL = "https://min-api.cryptocompare.com/data/price?fsym="+BASE_CURRENCY+"&tsyms="+QUOTE_CURRENCY;
-    Resources res;
-
 
     @Override
     public void onBackPressed(){
@@ -65,10 +57,7 @@ public class ConversionActivity extends AppCompatActivity {
         editor = sharedPref.edit();
         Bundle extras = getIntent().getExtras();
 
-        res = getResources();
-       // String[] currArry = res.getStringArray(R.array.currency_array);
-
-        if (extras != null) {
+       if (extras != null) {
 
             String from = extras.getString("from");
             String to = extras.getString("to");
@@ -78,8 +67,11 @@ public class ConversionActivity extends AppCompatActivity {
                     imageView.setImageResource(R.drawable.btc_logo);
                } else if (from.equals("ETH")) {
                     imageView.setImageResource(R.drawable.eth_logo);
-                 }
+               }
+
+               convert(from, to);
             }
+
         }
 
         from_currency.addTextChangedListener(new EditTextListener());
@@ -121,9 +113,9 @@ public class ConversionActivity extends AppCompatActivity {
                         JSONObject jsonObject = new JSONObject(sb.toString());
                         HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
                         if(conv == null){
-                           // createCard.amount.setText(to.concat(" 0.00"));
+                            to_currency.setText(to.concat(" 0.00"));
                         }else {
-                           // createCard.amount.setText(to+" "+conv.get(to));
+                            to_currency.setText(to+" "+conv.get(to));
                         }
                     }catch (Exception io){
                         io.printStackTrace();

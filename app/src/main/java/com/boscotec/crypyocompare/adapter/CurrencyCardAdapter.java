@@ -98,7 +98,6 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
                     final String _to = _xchange.split(",")[1];
 
                     Intent intent = new Intent(context, ConversionActivity.class);
-                    //intent.putExtra("position", currencies.get(holder.getAdapterPosition()));
                     intent.putExtra("from", _from);
                     intent.putExtra("to", _to);
                     context.startActivity(intent);
