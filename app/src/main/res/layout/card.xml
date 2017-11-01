@@ -1,19 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.CardView xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android"
- app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="5dp"
- android:layout_width="match_parent" android:layout_height="wrap_content">
+<com.balysv.materialripple.MaterialRippleLayout  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:mrl_rippleColor="#ff0000"
+    app:mrl_rippleAlpha="0.1"
+    app:mrl_rippleDelayClick="true"
+    app:mrl_rippleBackground="#FFFFFF"
+    app:mrl_ripplePersistent="false"
+    app:mrl_rippleOverlay="true"
+    app:mrl_rippleDimension="10dp"
+    app:mrl_rippleHover="true"
+    app:mrl_rippleRoundedCorners="10dp"
+    app:mrl_rippleDuration="200"
+    app:mrl_rippleFadeDuration="50"
+    android:paddingBottom="8dp"
+    >
+
+<android.support.v7.widget.CardView app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="2dp" android:layout_width="match_parent" android:layout_height="wrap_content">
      <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
         <ImageView android:id="@+id/close" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="end" app:srcCompat="@drawable/ic_clear" />
-        <ImageView android:id="@+id/icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" app:srcCompat="@mipmap/ic_launcher_round" />
-        <TextView android:id="@+id/amount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"
-            android:textColor="@color/black"
-            android:text="$5677.98"
-            android:textSize="25sp"/>
-
+        <ImageView android:id="@+id/icon" android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="center_horizontal" app:srcCompat="@mipmap/ic_launcher_round" />
+        <TextView android:id="@+id/amount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center_horizontal" android:layout_marginTop="20dp" android:layout_marginBottom="20dp" android:textColor="@color/black" android:textSize="25sp"/>
      </LinearLayout>
 </android.support.v7.widget.CardView>
+</com.balysv.materialripple.MaterialRippleLayout>

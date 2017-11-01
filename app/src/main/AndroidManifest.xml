@@ -3,16 +3,18 @@
     android:installLocation="auto"
     package="com.boscotec.crypyocompare">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:name=".App"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/icon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
+            android:name=".activity.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -20,7 +22,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CreateCardActivity"
+        <activity android:name=".ConversionActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".activity.AboutUs"
             android:theme="@style/AppTheme.NoActionBar"/>
 
     </application>

@@ -1,37 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:background="@color/cardview_shadow_start_color"
-    android:gravity="center" android:orientation="vertical" android:padding="20dp" android:layout_width="match_parent" android:layout_height="match_parent">
-
-    <android.support.v7.widget.CardView  app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="5dp" android:layout_width="match_parent" android:layout_height="wrap_content">
-        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+<android.support.v7.widget.CardView xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:android="http://schemas.android.com/apk/res/android"
+    app:cardBackgroundColor="@color/white" app:cardElevation="5dp" app:cardCornerRadius="3dp" app:contentPadding="5dp"
+    android:layout_margin="20dp" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:layout_gravity="bottom">
+       <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/card_bg" >
         <TextView android:id="@+id/amount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="20dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="10dp"
                 android:textColor="@color/black"
-                android:text="@string/app_name"
+                android:text="0.00"
                 android:textSize="25sp"/>
-        <LinearLayout
+           <LinearLayout
+               android:id="@+id/ll"
                 android:orientation="horizontal"
+                android:layout_below="@id/amount"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <RadioGroup
                     android:id="@+id/radioGroup"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginTop="2dp"
                     android:layout_marginBottom="2dp"
                     android:layout_marginRight="20dp"
                     android:layout_marginLeft="2dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginStart="2dp"
                     android:gravity="start">
 
                     <RadioButton
                         android:id="@+id/rb_btc"
-                        android:layout_width="150dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/btc"
@@ -40,11 +46,12 @@
                         android:button="@color/transparent"
                         android:checked="true"
                         android:layout_margin="2dp"
+                        android:maxLines="1"
                         />
 
                     <RadioButton
                         android:id="@+id/rb_eth"
-                        android:layout_width="150dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/eth"
@@ -52,6 +59,7 @@
                         android:background="@drawable/radio_button"
                         android:button="@color/transparent"
                         android:layout_margin="2dp"
+                        android:maxLines="1"
                         />
 
                 </RadioGroup>
@@ -71,19 +79,20 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:layout_margin="10dp"
+                    android:popupBackground="@color/transparent"
                     />
 
             </LinearLayout>
-        <Button android:id="@+id/save"
-            android:text="@string/save"
-            android:textColor="@color/white"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="10dp"
-            android:background="@drawable/button"
-            android:layout_gravity="end"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-        </LinearLayout>
-    </android.support.v7.widget.CardView>
 
-</LinearLayout>
+           <Button android:id="@+id/save"
+                 android:text="@string/save"
+                 android:textColor="@color/white"
+                 android:layout_marginTop="10dp"
+                 android:layout_marginRight="10dp"
+                 android:background="@drawable/button"
+                 android:layout_below="@id/ll"
+                 android:layout_alignParentRight="true"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content" />
+        </RelativeLayout>
+</android.support.v7.widget.CardView>

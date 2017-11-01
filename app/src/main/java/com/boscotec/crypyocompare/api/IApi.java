@@ -12,9 +12,6 @@ import retrofit2.http.Query;
  */
 
 public interface IApi {
-
-    //@POST("")
-    @GET("pricemulti?fsyms={from}&tsyms={to}")
-    Call<ResponseBody> grabConversion(@Query("from") String from,  @Query("to") String to);
-
+    @GET("price")
+    Call<ResponseBody> grabConversion(@Query("fsym") String from,  @Query("tsyms") String to);
 }

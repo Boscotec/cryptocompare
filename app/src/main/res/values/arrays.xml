@@ -1,8 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <array name="to_array">
-        <item>BTC</item>
-        <item>ETH</item>
-        <item>COM</item>
+
+        <item>AED</item>
+        <item>AUD</item>
+        <item>ARS</item>
+        <item>BRL</item>
+        <item>CAD</item>
+        <item>CHF</item>
+
+        <item>EUR</item>
+        <item>GPB</item>
+        <item>IDR</item>
+        <item>INR</item>
+        <item>JPY</item>
+
+        <item>KES</item>
+        <item>KRW</item>
+        <item>NGN</item>
+        <item>PLN</item>
+        <item>RUB</item>
+
+        <item>THB</item>
+        <item>TRY</item>
+        <item>TZS</item>
+        <item>UAH</item>
+        <item>USD</item>
+
     </array>
 </resources>
