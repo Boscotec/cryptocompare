@@ -65,8 +65,10 @@ public class ConversionActivity extends AppCompatActivity {
             if(from!=null && to!=null){
                if (from.equals("BTC")) {
                     imageView.setImageResource(R.drawable.btc_logo);
+                    from_currency.setHint("1 BTC");
                } else if (from.equals("ETH")) {
                     imageView.setImageResource(R.drawable.eth_logo);
+                    from_currency.setHint("1 ETH");
                }
 
                convert(from, to);
