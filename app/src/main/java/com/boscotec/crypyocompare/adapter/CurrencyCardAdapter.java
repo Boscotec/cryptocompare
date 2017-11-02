@@ -12,7 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.boscotec.crypyocompare.BuildConfig;
-import com.boscotec.crypyocompare.ConversionActivity;
+import com.boscotec.crypyocompare.activity.ConversionActivity;
 import com.boscotec.crypyocompare.utils.Jsonhelper;
 import com.boscotec.crypyocompare.R;
 import com.boscotec.crypyocompare.api.ApiClient;
@@ -135,7 +135,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     t.printStackTrace();
-                    Toast.makeText(context, "Error:  "+t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    Toast.makeText(context, "Error:  "+t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         }

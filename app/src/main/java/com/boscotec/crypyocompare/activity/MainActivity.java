@@ -26,6 +26,7 @@ import com.boscotec.crypyocompare.utils.Jsonhelper;
 import com.boscotec.crypyocompare.R;
 import com.boscotec.crypyocompare.api.ApiClient;
 import com.boscotec.crypyocompare.api.IApi;
+import com.boscotec.crypyocompare.utils.Util;
 
 import org.json.JSONObject;
 
@@ -269,6 +270,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void convert(String from, final String to) {
+        if(!Util.isOnline(this)) {
+            Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         IApi connectToApi = ApiClient.getClient().create(IApi.class);
         final Call<ResponseBody> call = connectToApi.grabConversion(from, to);
         call.enqueue(new Callback<ResponseBody>() {
@@ -298,7 +304,6 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 t.printStackTrace();
-                Toast.makeText(getBaseContext(), "error:  "+t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }

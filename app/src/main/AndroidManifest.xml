@@ -4,6 +4,7 @@
     package="com.boscotec.crypyocompare">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
     <application
         android:name=".App"
@@ -22,7 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ConversionActivity"
+        <activity android:name=".activity.ConversionActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity android:name=".activity.AboutUs"
             android:theme="@style/AppTheme.NoActionBar"/>
