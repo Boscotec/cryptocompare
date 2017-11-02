@@ -84,15 +84,15 @@ public class ConversionActivity extends AppCompatActivity {
             String input = from_currency.getText().toString().trim();
              if (!input.isEmpty()) {
 
-             //   if (xchng_rate != null) {
-               //     to_currency.setText(to + " " + String.valueOf(xchng_rate * Float.valueOf(input)));
-               // }
+                if (xchng_rate != null) {
+                    to_currency.setText(to + " " + String.valueOf(xchng_rate * Float.valueOf(input)));
+                }
 
              } else {
 
-         //       if (xchng_rate != null) {
-           //         to_currency.setText(to + " " + String.valueOf(xchng_rate * 0));
-             //   }
+                if (xchng_rate != null) {
+                    to_currency.setText(to + " " + String.valueOf(xchng_rate * 0));
+                }
 
             }
         }
