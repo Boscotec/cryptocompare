@@ -3,6 +3,7 @@ package com.boscotec.crypyocompare.activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -15,6 +16,7 @@ import com.boscotec.crypyocompare.utils.Jsonhelper;
 import com.boscotec.crypyocompare.utils.Util;
 
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -31,42 +33,36 @@ public class ConversionActivity extends AppCompatActivity {
     String to;
 
     @Override
-    public void onBackPressed(){
-    super.onBackPressed();
-        finish();
-    }
-
-    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_conversion);
+
         if(getSupportActionBar()!=null)
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        from_currency = findViewById(R.id.from_currency);
+        to_currency = findViewById(R.id.to_currency);
+        ImageView imageView = findViewById(R.id.currency_img);
+
         Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            String xchange = extras.getString("currencies");
+            final String from = xchange.split(",")[0];
+            final String to = xchange.split(",")[1];
 
-        from_currency = (EditText)findViewById(R.id.from_currency);
-        to_currency = (EditText)findViewById(R.id.to_currency);
-        ImageView imageView = (ImageView) findViewById(R.id.currency_img);
-
-       if (extras != null) {
-            String from = extras.getString("from");
-            to = extras.getString("to");
-
-            if(from!=null && to!=null){
-               if (from.equals("BTC")) {
+            if(TextUtils.isEmpty(from) && TextUtils.isEmpty(to)){
+                if (from.contains("Bitcoin")) {
                     imageView.setImageResource(R.drawable.btc_logo);
                     from_currency.setHint("1 BTC");
-               } else if (from.equals("ETH")) {
+                } else if (from.equals("Ethereum")) {
                     imageView.setImageResource(R.drawable.eth_logo);
                     from_currency.setHint("1 ETH");
-               }
-               convert(from, to);
+                }
+                convert(from, to);
             }
         }
 
         from_currency.addTextChangedListener(new EditTextListener());
     }
-
 
     private class EditTextListener implements TextWatcher {
 
@@ -81,20 +77,17 @@ public class ConversionActivity extends AppCompatActivity {
                 return;
              }
 
-            String input = from_currency.getText().toString().trim();
-             if (!input.isEmpty()) {
+            //String input = from_currency.getText().toString().trim();
+            // if (!input.isEmpty()) {
+            //    if (xchng_rate != null) {
+            //        to_currency.setText(to + " " + String.valueOf(xchng_rate * Float.valueOf(input)));
+            //    }
+            // } else {
+            //    if (xchng_rate != null) {
+            //        to_currency.setText(to + " " + String.valueOf(xchng_rate * 0));
+            //    }
+           // }
 
-                if (xchng_rate != null) {
-                    to_currency.setText(to + " " + String.valueOf(xchng_rate * Float.valueOf(input)));
-                }
-
-             } else {
-
-                if (xchng_rate != null) {
-                    to_currency.setText(to + " " + String.valueOf(xchng_rate * 0));
-                }
-
-            }
         }
 
         @Override
@@ -143,4 +136,9 @@ public class ConversionActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
+        finish();
+    }
 }

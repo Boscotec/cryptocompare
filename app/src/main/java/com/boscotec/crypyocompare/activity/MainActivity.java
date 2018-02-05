@@ -1,23 +1,26 @@
 package com.boscotec.crypyocompare.activity;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.content.res.Resources;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.AdapterView;
 import android.widget.Toast;
 
 import com.boscotec.crypyocompare.BuildConfig;
@@ -27,6 +30,8 @@ import com.boscotec.crypyocompare.R;
 import com.boscotec.crypyocompare.api.ApiClient;
 import com.boscotec.crypyocompare.api.IApi;
 import com.boscotec.crypyocompare.utils.Util;
+import com.getkeepsafe.taptargetview.TapTarget;
+import com.getkeepsafe.taptargetview.TapTargetSequence;
 
 import org.json.JSONObject;
 
@@ -41,8 +46,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity
-        implements AdapterView.OnItemSelectedListener, View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements CreateCard.CardClickListener,
+        View.OnClickListener, CurrencyCardAdapter.ItemClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
     RecyclerView recyclerView;
     CurrencyCardAdapter adapter;
@@ -51,30 +56,27 @@ public class MainActivity extends AppCompatActivity
     ArrayList<String> currencies;
     CreateCard createCard;
     FloatingActionButton fab;
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if(getSupportActionBar()!=null)
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        createCard = (CreateCard) findViewById(R.id.createcard);
-        createCard.to.setOnItemSelectedListener(this);
-        createCard.save.setOnClickListener(this);
-        createCard.rb_btc.setOnClickListener(this);
-        createCard.rb_eth.setOnClickListener(this);
+        if(getSupportActionBar()!=null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        createCard = findViewById(R.id.createcard);
+        createCard.setOnCardClickListener(this);
 
         sharedPref = getSharedPreferences(getString(R.string.shared_pref_cryptocompare), Context.MODE_PRIVATE);
         editor = sharedPref.edit();
-
         currencies = new ArrayList<>();
-        adapter = new CurrencyCardAdapter(this, currencies, sharedPref);
+        adapter = new CurrencyCardAdapter(this, this);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycler);
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(this);
+        recyclerView =  findViewById(R.id.recycler);
         if(getApplicationContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
             recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         } else{
@@ -84,54 +86,109 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
         recyclerView.setAdapter(adapter);
-
-        refresh();
-        if(sharedPref.getAll().isEmpty() || sharedPref.getInt("num_saved", 0)==0) {
-            Toast.makeText(this, "No card, click on the add button", Toast.LENGTH_LONG).show();
-        }
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(this);
     }
 
     @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.fab:
-                if(createCard.getVisibility()==View.VISIBLE){
-                    hideCard();
-                }else{
-                    showCard();
-                }
+    public void onCloseClick(int close) {
+        Timber.d("Clicked on: %s", close);
+        int all_saved = sharedPref.getInt("num_saved", 0);
+        for (int i = 0; i < all_saved; i++) {
+            if (sharedPref.getString("saved_" + i, BuildConfig.FLAVOR).equals(currencies.get(close))) {
+                currencies.remove(close);
+                editor.remove("saved_" + i);
+                editor.putInt("num_saved", all_saved - 1);
+                editor.commit();
+                Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show();
+                //refresh();
                 break;
-            case R.id.save:
-                Timber.d("Onclick of button");
-                String currency_selected = createCard.to.getSelectedItem().toString().trim();
-                if(createCard.rb_btc.isChecked()) {
-                    if(!checkIfExists("BTC", currency_selected)) {
-                        addCard("BTC", currency_selected);
-                    }else{
-                        Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
-                    }
-                }else if(createCard.rb_eth.isChecked()){
-                    if(!checkIfExists("ETH", currency_selected)) {
-                        addCard("ETH", currency_selected);
-                    }else{
-                        Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
-                    }
-                }
-                break;
-            case R.id.rb_btc:
-                convert("BTC", createCard.to.getSelectedItem().toString());
-                break;
-            case R.id.rb_eth:
-                convert("ETH", createCard.to.getSelectedItem().toString());
-                break;
-            default:
-                break;
+            }
         }
     }
 
+    @Override
+    public void onCardClick(int card) {
+        Intent intent = new Intent(this, ConversionActivity.class);
+        intent.putExtra("currencies", currencies.get(card));
+        startActivity(intent);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        sharedPref.registerOnSharedPreferenceChangeListener(this);
+        refresh();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
+        hideCard();
+    }
+
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
+        System.exit(0);
+    }
+
+    private void refresh(){
+        currencies.clear();
+        int all_saved = sharedPref.getInt("num_saved", 0);
+        for(int i=0; i<all_saved; i++){
+            currencies.add(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR));
+        }
+
+        if(currencies.size() != 0){
+            adapter.swapItems(currencies);
+            adapter.notifyDataSetChanged();
+        }else{
+            teachApp();
+        }
+    }
+
+    @TargetApi(17)
+    private void teachApp() {
+        final SpannableString sassyDesc = new SpannableString("It allows you to close the app");
+        sassyDesc.setSpan(new StyleSpan(Typeface.ITALIC), sassyDesc.length(), sassyDesc.length(), 0);
+
+        // We have a sequence of targets, so lets build it!
+        final TapTargetSequence sequence = new TapTargetSequence(this)
+                .continueOnCancel(true)
+                .targets(
+                    // This tap target will target the back button, we just need to pass its containing toolbar
+                    TapTarget.forToolbarNavigationIcon(toolbar, "This is the back button", sassyDesc).id(1),
+                   // Likewise, this tap target will target the search button
+                        //TapTarget.forToolbarMenuItem(toolbar, R.id.search, "This is a search icon", "As you can see, it has gotten pretty dark around here...")
+                        //     .dimColor(android.R.color.black).outerCircleColor(R.color.colorAccent).transparentTarget(true)
+                        //     .targetCircleColor(android.R.color.black).textColor(android.R.color.black).id(2),
+                   // Likewise, this tap target will target the toolbar overflow button
+                    TapTarget.forToolbarOverflow(toolbar, "This will show more options", "See more option").id(3),
+                    TapTarget.forView(findViewById(R.id.fab), "Fab", "Click here to create a card").id(4)
+                            .icon(getResources().getDrawable(R.drawable.ic_add_24dp))
+                            .outerCircleColor(R.color.colorPrimary).targetCircleColor(R.color.white)
+                            .textColor(R.color.white).textTypeface(Typeface.SANS_SERIF)
+                            .dimColor(android.R.color.black).targetRadius(40)
+                )
+                .listener(new TapTargetSequence.Listener() {
+                    // This listener will tell us when interesting(tm) events happen in regards to the sequence
+                    @Override
+                    public void onSequenceFinish() {
+                    }
+
+                    @Override
+                    public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {
+                        Log.d("TapTargetView: ", "Clicked on " + lastTarget.id());
+                    }
+
+                    @Override
+                    public void onSequenceCanceled(TapTarget lastTarget) {
+                        Log.d("TapTargetView: ", "Cancel at " + lastTarget.id());
+                    }
+                });
+
+        sequence.start();
+    }
 
     private void showCard(){
         createCard.setVisibility(View.VISIBLE);
@@ -141,6 +198,32 @@ public class MainActivity extends AppCompatActivity
     private void hideCard(){
         createCard.setVisibility(View.GONE);
         fab.setImageResource(R.drawable.ic_add);
+    }
+
+    @Override
+    public void onRadioButtonClick(String from, String currency) {
+      convert(from, currency);
+    }
+
+    @Override
+    public void onSaveClick(String from, String currency) {
+        Timber.d("Onclick of button");
+        if(!checkIfExists(from, currency)){
+            addCard(from, currency);
+        }else {
+            Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.fab:
+                if(createCard.getVisibility()==View.VISIBLE){hideCard();}
+                else{showCard();}
+                break;
+            default:break;
+        }
     }
 
     public boolean checkIfExists(String from_currency, String to_currency) {
@@ -153,7 +236,6 @@ public class MainActivity extends AppCompatActivity
         return false;
     }
 
-
     public void addCard(String from_currency,  String to_currency) {
         int all_saved = sharedPref.getInt("num_saved", 0);
         editor.putInt("num_saved", all_saved+1);
@@ -161,33 +243,12 @@ public class MainActivity extends AppCompatActivity
         editor.commit();
         Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
         hideCard();
-        refresh();
+        //refresh();
     }
 
     @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if(parent.getId() == R.id.spinnerto){
-            Timber.d("Ready to go online");
-            if(createCard.rb_btc.isChecked()) {
-                convert("BTC", createCard.to.getSelectedItem().toString());
-            }else if(createCard.rb_eth.isChecked()){
-                convert("ETH", createCard.to.getSelectedItem().toString());
-            }
-        }
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        Timber.d("Nothing was selected");
-    }
-
-    private void refresh(){
-        currencies.clear();
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        for(int i=0; i<all_saved; i++){
-            currencies.add(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR));
-        }
-        adapter.notifyDataSetChanged();
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+         refresh();
     }
 
     private class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
@@ -196,7 +257,7 @@ public class MainActivity extends AppCompatActivity
         private int spacing;
         private boolean includeEdge;
 
-        public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
+        private GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
             this.spanCount = spanCount;
             this.spacing = spacing;
             this.includeEdge = includeEdge;
@@ -226,14 +287,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private int dpToPx(int dp) {
-        Resources r = getResources();
-        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-        refresh();
+       return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics()));
     }
 
     @Override
@@ -247,8 +301,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_about) {
-            Intent intent = new Intent(this, AboutUs.class);
-            startActivity(intent);
+            startActivity(new Intent(this, AboutUs.class));
             return true;
         }else if(id == android.R.id.home){
             finish();
@@ -257,21 +310,9 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onPause(){
-        super.onPause();
-        hideCard();
-    }
-
-    @Override
-    public void onBackPressed(){
-        super.onBackPressed();
-        System.exit(0);
-    }
-
     public void convert(String from, final String to) {
         if(!Util.isOnline(this)) {
-            Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -291,9 +332,9 @@ public class MainActivity extends AppCompatActivity
                         JSONObject jsonObject = new JSONObject(sb.toString());
                         HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
                         if(conv == null){
-                            createCard.amount.setText(to.concat(" 0.00"));
+                            createCard.amount.setText(String.format("%s 0.00", to));
                         }else {
-                            createCard.amount.setText(to+" "+conv.get(to));
+                            createCard.amount.setText(String.format("%s %s", to, conv.get(to)));
                         }
                     }catch (Exception io){
                         io.printStackTrace();
