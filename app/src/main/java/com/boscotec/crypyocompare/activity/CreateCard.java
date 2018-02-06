@@ -22,7 +22,7 @@ import timber.log.Timber;
  */
 
 public class CreateCard extends RelativeLayout implements View.OnClickListener, AdapterView.OnItemSelectedListener {
-    TextView amount;
+    private TextView textViewAmount;
     private Spinner spinner;
     private RadioGroup radioGroup;
     private RadioButton radioButtonBtc;
@@ -45,7 +45,7 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
 
     private void init() {
         View view = inflate(getContext(), R.layout.activity_createcard, this);
-        amount = view.findViewById(R.id.amount);
+        textViewAmount = view.findViewById(R.id.amount);
         radioGroup = view.findViewById(R.id.radioGroup);
         radioButtonBtc = view.findViewById(R.id.rb_btc);
         radioButtonBtc.setOnClickListener(this);
@@ -61,6 +61,14 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
         spinner.setAdapter(toCurrenciesAdapter);
         //spinner.setSelection(1);
         spinner.setOnItemSelectedListener(this);
+    }
+
+    public String getAmount(){
+        return textViewAmount.getText().toString();
+    }
+
+    public void setAmount(String amount){
+        textViewAmount.setText(amount);
     }
 
     @Override

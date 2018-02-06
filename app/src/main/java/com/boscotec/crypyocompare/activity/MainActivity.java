@@ -47,7 +47,7 @@ import retrofit2.Response;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity implements CreateCard.CardClickListener,
-        View.OnClickListener, CurrencyCardAdapter.ItemClickListener, SharedPreferences.OnSharedPreferenceChangeListener {
+        View.OnClickListener, CurrencyCardAdapter.ItemClickListener {
 
     RecyclerView recyclerView;
     CurrencyCardAdapter adapter;
@@ -86,6 +86,8 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
         recyclerView.setAdapter(adapter);
+
+        refresh();
     }
 
     @Override
@@ -99,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                 editor.putInt("num_saved", all_saved - 1);
                 editor.commit();
                 Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show();
-                //refresh();
+                refresh();
                 break;
             }
         }
@@ -109,20 +111,18 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
     public void onCardClick(int card) {
         Intent intent = new Intent(this, ConversionActivity.class);
         intent.putExtra("currencies", currencies.get(card));
+        intent.putExtra("amount", "5000");
         startActivity(intent);
     }
 
     @Override
     public void onResume(){
         super.onResume();
-        sharedPref.registerOnSharedPreferenceChangeListener(this);
-        refresh();
     }
 
     @Override
     public void onPause(){
         super.onPause();
-        sharedPref.unregisterOnSharedPreferenceChangeListener(this);
         hideCard();
     }
 
@@ -138,11 +138,9 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         for(int i=0; i<all_saved; i++){
             currencies.add(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR));
         }
+        adapter.swapItems(currencies);
 
-        if(currencies.size() != 0){
-            adapter.swapItems(currencies);
-            adapter.notifyDataSetChanged();
-        }else{
+        if(currencies.size() == 0){
             teachApp();
         }
     }
@@ -243,12 +241,7 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         editor.commit();
         Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
         hideCard();
-        //refresh();
-    }
-
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-         refresh();
+        refresh();
     }
 
     private class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
@@ -312,9 +305,12 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
 
     public void convert(String from, final String to) {
         if(!Util.isOnline(this)) {
-           // Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        if (from.contains("Bitcoin")) { from = "BTC";}
+        else if (from.contains("Ethereum")) { from = "ETH";}
 
         IApi connectToApi = ApiClient.getClient().create(IApi.class);
         final Call<ResponseBody> call = connectToApi.grabConversion(from, to);
@@ -332,9 +328,9 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                         JSONObject jsonObject = new JSONObject(sb.toString());
                         HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
                         if(conv == null){
-                            createCard.amount.setText(String.format("%s 0.00", to));
+                            createCard.setAmount(String.format("%s 0.00", to));
                         }else {
-                            createCard.amount.setText(String.format("%s %s", to, conv.get(to)));
+                            createCard.setAmount(String.format("%s %s", to, conv.get(to)));
                         }
                     }catch (Exception io){
                         io.printStackTrace();

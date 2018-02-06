@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.boscotec.crypyocompare.utils.Jsonhelper;
 import com.boscotec.crypyocompare.R;
@@ -44,6 +43,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
     public CurrencyCardAdapter(Context context, ItemClickListener mOnClickListener) {
         this.context = context;
         this.mOnClickListener = mOnClickListener;
+        currencies = new ArrayList<>();
     }
 
     @Override
@@ -57,7 +57,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
 
     public void swapItems(ArrayList<String> newItems) {
         if(currencies != null) currencies.clear();
-        currencies = newItems;
+        currencies.addAll(newItems);
         if(newItems != null){
             // Force the RecyclerView to refresh
             this.notifyDataSetChanged();
@@ -92,13 +92,13 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
         }
 
         public void bindType(String currency) {
-            final String from = currency.split(",")[0];
+            String from = currency.split(",")[0];
             final String to = currency.split(",")[1];
 
             amount.setText(String.format("%s 0.00", to));
 
-            if (from.contains("Bitcoin")) {icon.setImageResource(R.drawable.btc_logo);}
-            else if (from.contains("Ethereum")) {icon.setImageResource(R.drawable.eth_logo);}
+            if (from.contains("Bitcoin")) { icon.setImageResource(R.drawable.btc_logo); from = "BTC";}
+            else if (from.contains("Ethereum")) {icon.setImageResource(R.drawable.eth_logo); from = "ETH";}
 
             IApi connectToApi = ApiClient.getClient().create(IApi.class);
             final Call<ResponseBody> call = connectToApi.grabConversion(from, to);
@@ -129,7 +129,6 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
                 @Override
                 public void onFailure(Call<ResponseBody> call, Throwable t) {
                     t.printStackTrace();
-                   // Toast.makeText(context, "Error:  "+t.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
         }
