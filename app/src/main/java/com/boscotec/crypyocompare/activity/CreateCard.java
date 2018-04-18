@@ -2,6 +2,7 @@ package com.boscotec.crypyocompare.activity;
 
 import android.content.Context;
 import android.support.annotation.IdRes;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
@@ -104,8 +105,10 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
                 mOnClickListener.onRadioButtonClick(radioButtonEth.getText().toString(), spinner.getSelectedItem().toString());
                 break;
             case R.id.save:
-                mOnClickListener.onSaveClick(((RadioButton)findViewById(radioGroup.getCheckedRadioButtonId())).getText().toString(),
-                        spinner.getSelectedItem().toString());
+                mOnClickListener.onSaveClick(
+                        ((RadioButton)findViewById(radioGroup.getCheckedRadioButtonId())).getText().toString(),
+                        spinner.getSelectedItem().toString(),
+                        TextUtils.isEmpty(getAmount())? "0.00": getAmount().substring(3));
                 break;
             default:break;
         }
@@ -117,6 +120,6 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
 
     public interface CardClickListener {
         void onRadioButtonClick(String from, String currency);
-        void onSaveClick(String from, String currency);
+        void onSaveClick(String from, String to, String rate);
     }
 }

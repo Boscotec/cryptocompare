@@ -25,11 +25,12 @@ import android.widget.Toast;
 
 import com.boscotec.crypyocompare.BuildConfig;
 import com.boscotec.crypyocompare.adapter.CurrencyCardAdapter;
+import com.boscotec.crypyocompare.model.Crypto;
 import com.boscotec.crypyocompare.utils.Jsonhelper;
 import com.boscotec.crypyocompare.R;
 import com.boscotec.crypyocompare.api.ApiClient;
 import com.boscotec.crypyocompare.api.IApi;
-import com.boscotec.crypyocompare.utils.Util;
+import com.boscotec.crypyocompare.utils.Utils;
 import com.getkeepsafe.taptargetview.TapTarget;
 import com.getkeepsafe.taptargetview.TapTargetSequence;
 
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
     CurrencyCardAdapter adapter;
     SharedPreferences sharedPref = null;
     SharedPreferences.Editor editor = null;
-    ArrayList<String> currencies;
+    ArrayList<Crypto> currencies;
     CreateCard createCard;
     FloatingActionButton fab;
     Toolbar toolbar;
@@ -92,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
 
     @Override
     public void onCloseClick(int close) {
-        Timber.d("Clicked on: %s", close);
+    /*    Timber.d("Clicked on: %s", close);
         int all_saved = sharedPref.getInt("num_saved", 0);
         for (int i = 0; i < all_saved; i++) {
             if (sharedPref.getString("saved_" + i, BuildConfig.FLAVOR).equals(currencies.get(close))) {
@@ -105,13 +106,13 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                 break;
             }
         }
+        */
     }
 
     @Override
-    public void onCardClick(int card) {
+    public void onCardClick(Crypto card) {
         Intent intent = new Intent(this, ConversionActivity.class);
-        intent.putExtra("currencies", currencies.get(card));
-        intent.putExtra("amount", "5000");
+        intent.putExtra("crypto", card);
         startActivity(intent);
     }
 
@@ -136,7 +137,10 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         currencies.clear();
         int all_saved = sharedPref.getInt("num_saved", 0);
         for(int i=0; i<all_saved; i++){
-            currencies.add(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR));
+           String s = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
+           String from = s.split(",")[0];
+           String to = s.split(",")[1];
+           currencies.add(new Crypto(to, "1000", Integer.valueOf(from)));
         }
         adapter.swapItems(currencies);
 
@@ -156,10 +160,6 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                 .targets(
                     // This tap target will target the back button, we just need to pass its containing toolbar
                     TapTarget.forToolbarNavigationIcon(toolbar, "This is the back button", sassyDesc).id(1),
-                   // Likewise, this tap target will target the search button
-                        //TapTarget.forToolbarMenuItem(toolbar, R.id.search, "This is a search icon", "As you can see, it has gotten pretty dark around here...")
-                        //     .dimColor(android.R.color.black).outerCircleColor(R.color.colorAccent).transparentTarget(true)
-                        //     .targetCircleColor(android.R.color.black).textColor(android.R.color.black).id(2),
                    // Likewise, this tap target will target the toolbar overflow button
                     TapTarget.forToolbarOverflow(toolbar, "This will show more options", "See more option").id(3),
                     TapTarget.forView(findViewById(R.id.fab), "Fab", "Click here to create a card").id(4)
@@ -204,13 +204,34 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
     }
 
     @Override
-    public void onSaveClick(String from, String currency) {
+    public void onSaveClick(String from, String to, String amount) {
         Timber.d("Onclick of button");
-        if(!checkIfExists(from, currency)){
-            addCard(from, currency);
+        if(!checkIfExists(from, to)){
+            addCard(from, to, amount);
         }else {
             Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
         }
+    }
+
+    public void update(String from, String to, String amount){
+        int all_saved = sharedPref.getInt("num_saved", 0);
+        for(int i=0; i<all_saved; i++){
+            String json = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
+            try {
+                JSONObject jsonObject = new JSONObject(json);
+                HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
+                if(conv.get("crypto").equals(from+to)){
+
+                    //return true;
+                    //update
+
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+
     }
 
     @Override
@@ -224,20 +245,27 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         }
     }
 
-    public boolean checkIfExists(String from_currency, String to_currency) {
+    public boolean checkIfExists(String from, String to) {
         int all_saved = sharedPref.getInt("num_saved", 0);
         for(int i=0; i<all_saved; i++){
-            if(sharedPref.getString("saved_"+i, BuildConfig.FLAVOR).equals(from_currency+","+to_currency)){
-                return true;
-            }
+            String json = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
+            try {
+                JSONObject jsonObject = new JSONObject(json);
+                HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
+                if(conv.get("crypto").equals(from+to)){
+                    return true;
+                }
+            }catch (Exception e){ e.printStackTrace();}
         }
         return false;
     }
 
-    public void addCard(String from_currency,  String to_currency) {
+    public void addCard(String from,  String to, String amount) {
+        String json = String.format("{\"crypto\":\"%s\", \"amount\":\"%s\"}", from+to, amount);
+
         int all_saved = sharedPref.getInt("num_saved", 0);
         editor.putInt("num_saved", all_saved+1);
-        editor.putString("saved_"+all_saved, from_currency+","+to_currency);
+        editor.putString("saved_"+all_saved, json);
         editor.commit();
         Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
         hideCard();
@@ -303,8 +331,9 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         return super.onOptionsItemSelected(item);
     }
 
+
     public void convert(String from, final String to) {
-        if(!Util.isOnline(this)) {
+        if(!Utils.isOnline(this)) {
             Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -327,11 +356,11 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
 
                         JSONObject jsonObject = new JSONObject(sb.toString());
                         HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
-                        if(conv == null){
-                            createCard.setAmount(String.format("%s 0.00", to));
-                        }else {
-                            createCard.setAmount(String.format("%s %s", to, conv.get(to)));
-                        }
+
+                        Toast.makeText(MainActivity.this, to+" "+ conv.get(to), Toast.LENGTH_LONG).show();
+
+                        createCard.setAmount(conv.isEmpty()? String.format("%s 0.00", to) : conv.get(to));
+                                /* String.format("%s %s", to, conv.get(to)) */
                     }catch (Exception io){
                         io.printStackTrace();
                     }
@@ -343,6 +372,8 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                 t.printStackTrace();
             }
         });
+
     }
+
 
 }

@@ -1,9 +1,5 @@
 package com.boscotec.crypyocompare.utils;
 
-import android.util.Log;
-import android.widget.Toast;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -30,6 +26,6 @@ public class Jsonhelper {
                 hashMap.put(key, value.toString());
             }
          }
-        return hashMap;
+         return hashMap;
     }
 }

@@ -9,35 +9,22 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.boscotec.crypyocompare.utils.Jsonhelper;
+import com.boscotec.crypyocompare.model.Crypto;
 import com.boscotec.crypyocompare.R;
-import com.boscotec.crypyocompare.api.ApiClient;
-import com.boscotec.crypyocompare.api.IApi;
-
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 /**
  * Created by Johnbosco on 16-Oct-17.
  */
 
 public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapter.ViewHolder> {
-    ArrayList<String> currencies;
-    Context context;
+    private ArrayList<Crypto> currencies;
+    private Context context;
 
     private ItemClickListener mOnClickListener;
     public interface ItemClickListener {
         void onCloseClick(int close);
-        void onCardClick(int card);
+        void onCardClick(Crypto crypto);
     }
 
     public CurrencyCardAdapter(Context context, ItemClickListener mOnClickListener) {
@@ -55,7 +42,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
         }
     }
 
-    public void swapItems(ArrayList<String> newItems) {
+    public void swapItems(ArrayList<Crypto> newItems) {
         if(currencies != null) currencies.clear();
         currencies.addAll(newItems);
         if(newItems != null){
@@ -71,8 +58,8 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
-        String currency = currencies.get(position);
-        if(TextUtils.isEmpty(currency)) return;
+        Crypto currency = currencies.get(position);
+        if(currency == null) return;
         holder.bindType(currency);
     }
 
@@ -81,7 +68,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
         ImageView icon;
         TextView amount;
 
-        public ViewHolder(View view) {
+         ViewHolder(View view) {
             super(view);
             amount = view.findViewById(R.id.amount);
             close = view.findViewById(R.id.close);
@@ -91,56 +78,29 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
             itemView.setOnClickListener(this);
         }
 
-        public void bindType(String currency) {
-            String from = currency.split(",")[0];
-            final String to = currency.split(",")[1];
+         void bindType(Crypto currency) {
+            String rate = currency.getRate();
+            amount.setText(String.format("%s %s", currency.getCurrency(), (TextUtils.isEmpty(rate)? "0.00" : rate)));
+          //  icon.setImageResource(currency.getImage());
 
-            amount.setText(String.format("%s 0.00", to));
 
-            if (from.contains("Bitcoin")) { icon.setImageResource(R.drawable.btc_logo); from = "BTC";}
-            else if (from.contains("Ethereum")) {icon.setImageResource(R.drawable.eth_logo); from = "ETH";}
-
-            IApi connectToApi = ApiClient.getClient().create(IApi.class);
-            final Call<ResponseBody> call = connectToApi.grabConversion(from, to);
-            call.enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    if(response.isSuccessful()){
-                        StringBuilder sb = new StringBuilder();
-                        try{
-                            BufferedReader br = new BufferedReader(new InputStreamReader(response.body().byteStream()));
-                            for (String temp; ((temp = br.readLine()) != null); ) {
-                                sb.append(temp);
-                            }
-
-                            JSONObject jsonObject = new JSONObject(sb.toString());
-                            HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
-                            if(conv == null){
-                                amount.setText(String.format("%s 0.00", to));
-                            }else {
-                                amount.setText(String.format("%s %s", to, conv.get(to)));
-                            }
-                        }catch (Exception io){
-                            io.printStackTrace();
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    t.printStackTrace();
-                }
-            });
+            //if (from.contains("Bitcoin")) { icon.setImageResource(R.drawable.btc_logo); from = "BTC";}
+            //else if (from.contains("Ethereum")) {icon.setImageResource(R.drawable.eth_logo); from = "ETH";}
         }
 
         @Override
         public void onClick(View view) {
-            if(mOnClickListener == null) return;
-            if(view.getId() == R.id.close){
-                mOnClickListener.onCloseClick(getAdapterPosition());
-            }else{
-                mOnClickListener.onCardClick(getAdapterPosition());
-            }
+            Crypto card = currencies.get(getAdapterPosition());
+            if(card == null) return;
+
+            if (mOnClickListener != null){
+                if (view.getId() == R.id.close) {
+                    mOnClickListener.onCloseClick(getAdapterPosition());
+                } else {
+                    mOnClickListener.onCardClick(card);
+                }
+           }
+
         }
     }
 }

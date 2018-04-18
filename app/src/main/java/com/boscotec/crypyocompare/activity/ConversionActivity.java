@@ -7,12 +7,11 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.boscotec.crypyocompare.R;
+import com.boscotec.crypyocompare.model.Crypto;
 
 public class ConversionActivity extends AppCompatActivity {
-    //EditText from_currency;
     EditText to_currency;
     Float xchng_rate;
     String to;
@@ -30,30 +29,29 @@ public class ConversionActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            String xchange = extras.getString("currencies");
-            String amount = extras.getString("amount");
+            Crypto crypto = (Crypto) extras.getSerializable("crypto");
+           // String xchange = extras.getString("crypto");
+            //String amount = extras.getString("amount");
+            
+            //String from = xchange.split(",")[0];
+            //final String to = xchange.split(",")[1];
 
-            Toast.makeText(this, xchange, Toast.LENGTH_SHORT).show();
+          //  if(!TextUtils.isEmpty(from) && !TextUtils.isEmpty(to)){
+          //      if (from.contains("Bitcoin")) {
+          //          imageView.setImageResource(R.drawable.btc_logo);
+          //          from_currency.setHint("1 BTC");
+          //      } else if (from.contains("Ethereum")) {
+          //          imageView.setImageResource(R.drawable.eth_logo);
+          //          from_currency.setHint("1 ETH");
+          //      }
 
-            String from = xchange.split(",")[0];
-            final String to = xchange.split(",")[1];
-
-            if(!TextUtils.isEmpty(from) && !TextUtils.isEmpty(to)){
-                if (from.contains("Bitcoin")) {
-                    imageView.setImageResource(R.drawable.btc_logo);
-                    from_currency.setHint("1 BTC");
-                } else if (from.contains("Ethereum")) {
-                    imageView.setImageResource(R.drawable.eth_logo);
-                    from_currency.setHint("1 ETH");
-                }
-
-                xchng_rate = Float.valueOf(amount);
-                if (TextUtils.isEmpty(amount)) {
-                    to_currency.setText(to.concat(" 0.00"));
-                } else {
-                    to_currency.setText(String.format("%s %s", to, amount));
-                }
-            }
+          //      xchng_rate = Float.valueOf(amount);
+          //      if (TextUtils.isEmpty(amount)) {
+          //          to_currency.setText(to.concat(" 0.00"));
+          //      } else {
+          //          to_currency.setText(String.format("%s %s", to, amount));
+          //      }
+          //  }
         }
 
         from_currency.addTextChangedListener(new EditTextListener());
@@ -67,14 +65,14 @@ public class ConversionActivity extends AppCompatActivity {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            String input = s.toString(); //from_currency.getText().toString().trim();
-            if(xchng_rate != null){
-                if (!TextUtils.isEmpty(input)) {
-                    to_currency.setText(String.format("%s %s", to, String.valueOf(xchng_rate * Float.valueOf(input))));
-                } else {
-                    to_currency.setText(String.format("%s %s", to, String.valueOf(xchng_rate * 0)));
-                }
-            }
+            String input = s.toString();
+            //if(xchng_rate != null){
+            //    if (!TextUtils.isEmpty(input)) {
+            //        to_currency.setText(String.format("%s %s", to, String.valueOf(xchng_rate * Float.valueOf(input))));
+            //    } else {
+            //        to_currency.setText(String.format("%s %s", to, String.valueOf(xchng_rate * 0)));
+            //    }
+            //}
         }
 
         @Override
