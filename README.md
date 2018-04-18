@@ -1,2 +1,1 @@
-# cryptocompare
-By Boscotec.
+# Cryptocompare
