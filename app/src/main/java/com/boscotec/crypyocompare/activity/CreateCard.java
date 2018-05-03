@@ -1,8 +1,6 @@
 package com.boscotec.crypyocompare.activity;
 
 import android.content.Context;
-import android.support.annotation.IdRes;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,6 +13,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.boscotec.crypyocompare.R;
+import com.boscotec.crypyocompare.model.Crypto;
 
 import timber.log.Timber;
 
@@ -26,19 +25,18 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
     private TextView textViewAmount;
     private Spinner spinner;
     private RadioGroup radioGroup;
-    private RadioButton radioButtonBtc;
-    private RadioButton radioButtonEth;
-    private Button buttonSave;
     private CardClickListener mOnClickListener;
 
     public CreateCard(Context context) {
         super(context);
         init();
     }
+
     public CreateCard(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
+
     public CreateCard(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
@@ -48,11 +46,11 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
         View view = inflate(getContext(), R.layout.activity_createcard, this);
         textViewAmount = view.findViewById(R.id.amount);
         radioGroup = view.findViewById(R.id.radioGroup);
-        radioButtonBtc = view.findViewById(R.id.rb_btc);
+        RadioButton radioButtonBtc = view.findViewById(R.id.rb_btc);
         radioButtonBtc.setOnClickListener(this);
-        radioButtonEth = view.findViewById(R.id.rb_eth);
+        RadioButton radioButtonEth = view.findViewById(R.id.rb_eth);
         radioButtonEth.setOnClickListener(this);
-        buttonSave = view.findViewById(R.id.save);
+        Button buttonSave = view.findViewById(R.id.save);
         buttonSave.setOnClickListener(this);
         spinner = view.findViewById(R.id.spinnerto);
 
@@ -76,15 +74,7 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         Timber.d("Ready to go online");
         if(adapterView.getId() == R.id.spinnerto){
-            switch (radioGroup.getCheckedRadioButtonId()){
-                case R.id.rb_btc:
-                    mOnClickListener.onRadioButtonClick(radioButtonBtc.getText().toString(), spinner.getSelectedItem().toString());
-                    break;
-                case R.id.rb_eth:
-                    mOnClickListener.onRadioButtonClick(radioButtonEth.getText().toString(), spinner.getSelectedItem().toString());
-                    break;
-                default:break;
-            }
+            switcher(radioGroup.getCheckedRadioButtonId());
         }
     }
 
@@ -96,19 +86,34 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
     @Override
     public void onClick(View view) {
         if(mOnClickListener == null) return;
+        switcher(view.getId());
+    }
 
-        switch (view.getId()){
+    public void switcher(int id){
+        Crypto crypto = new Crypto();
+        crypto.setToCurrency(spinner.getSelectedItem().toString());
+
+        switch (id){
             case R.id.rb_btc:
-                mOnClickListener.onRadioButtonClick(radioButtonBtc.getText().toString(), spinner.getSelectedItem().toString());
+                crypto.setBaseCurrency("BTC");
+                crypto.setImage(R.drawable.btc_logo);
+                mOnClickListener.onRadioButtonClick(crypto);
                 break;
             case R.id.rb_eth:
-                mOnClickListener.onRadioButtonClick(radioButtonEth.getText().toString(), spinner.getSelectedItem().toString());
+                crypto.setBaseCurrency("ETH");
+                crypto.setImage(R.drawable.eth_logo);
+                mOnClickListener.onRadioButtonClick(crypto);
                 break;
             case R.id.save:
-                mOnClickListener.onSaveClick(
-                        ((RadioButton)findViewById(radioGroup.getCheckedRadioButtonId())).getText().toString(),
-                        spinner.getSelectedItem().toString(),
-                        TextUtils.isEmpty(getAmount())? "0.00": getAmount().substring(3));
+
+                if(radioGroup.getCheckedRadioButtonId() == R.id.rb_btc){
+                    crypto.setBaseCurrency("BTC");
+                    crypto.setImage(R.drawable.btc_logo);
+                } else{
+                    crypto.setBaseCurrency("ETH");
+                    crypto.setImage(R.drawable.eth_logo);
+                }
+                mOnClickListener.onSaveClick(crypto);
                 break;
             default:break;
         }
@@ -119,7 +124,7 @@ public class CreateCard extends RelativeLayout implements View.OnClickListener, 
     }
 
     public interface CardClickListener {
-        void onRadioButtonClick(String from, String currency);
-        void onSaveClick(String from, String to, String rate);
+        void onRadioButtonClick(Crypto crypto);
+        void onSaveClick(Crypto crypto);
     }
 }

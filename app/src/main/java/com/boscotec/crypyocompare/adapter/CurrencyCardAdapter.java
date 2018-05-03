@@ -1,6 +1,7 @@
 package com.boscotec.crypyocompare.adapter;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -8,59 +9,76 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.boscotec.crypyocompare.activity.MainActivity;
+import com.boscotec.crypyocompare.api.ApiClient;
+import com.boscotec.crypyocompare.api.IApi;
 import com.boscotec.crypyocompare.model.Crypto;
 import com.boscotec.crypyocompare.R;
-import java.util.ArrayList;
+import com.boscotec.crypyocompare.utils.Jsonhelper;
+import com.boscotec.crypyocompare.utils.Utils;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Johnbosco on 16-Oct-17.
  */
 
 public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapter.ViewHolder> {
-    private ArrayList<Crypto> currencies;
-    private Context context;
 
     private ItemClickListener mOnClickListener;
+    private List<Crypto> items;
+    private Context context;
+
     public interface ItemClickListener {
-        void onCloseClick(int close);
+        void onCardCloseClick(Crypto crypto);
         void onCardClick(Crypto crypto);
     }
 
     public CurrencyCardAdapter(Context context, ItemClickListener mOnClickListener) {
         this.context = context;
         this.mOnClickListener = mOnClickListener;
-        currencies = new ArrayList<>();
     }
 
     @Override
     public int getItemCount() {
-        if(currencies == null){
-            return 0;
-        }else{
-            return currencies.size();
-        }
+        return items == null ? 0 : items.size();
     }
 
-    public void swapItems(ArrayList<Crypto> newItems) {
-        if(currencies != null) currencies.clear();
-        currencies.addAll(newItems);
-        if(newItems != null){
-            // Force the RecyclerView to refresh
-            this.notifyDataSetChanged();
-        }
-    }
+    public void swapItems(List<Crypto> newItems) {
+        if(newItems == null) return;
 
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        return  new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.card, parent, false));
+        if(items != null) items.clear();
+        items = newItems;
+
+        //Toast.makeText(context, String.valueOf(newItems.size()), Toast.LENGTH_SHORT).show();
+
+       // Force the RecyclerView to refresh
+        this.notifyDataSetChanged();
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
-        Crypto currency = currencies.get(position);
-        if(currency == null) return;
-        holder.bindType(currency);
+    @NonNull
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.card, parent, false));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
+        Crypto item = items.get(position);
+        if(item == null) return;
+        holder.bindType(item);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -68,7 +86,7 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
         ImageView icon;
         TextView amount;
 
-         ViewHolder(View view) {
+        ViewHolder(View view) {
             super(view);
             amount = view.findViewById(R.id.amount);
             close = view.findViewById(R.id.close);
@@ -78,29 +96,52 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
             itemView.setOnClickListener(this);
         }
 
-         void bindType(Crypto currency) {
-            String rate = currency.getRate();
-            amount.setText(String.format("%s %s", currency.getCurrency(), (TextUtils.isEmpty(rate)? "0.00" : rate)));
-          //  icon.setImageResource(currency.getImage());
+        void bindType(final Crypto currency) {
+            icon.setImageResource(currency.getImage());
+            amount.setText(String.format("%s 0.00", currency.getToCurrency()));
+            currency.setAmount("0.00");
 
+            if (Utils.isOnline(context)) {
+                IApi connectToApi = ApiClient.getClient().create(IApi.class);
+                final Call<ResponseBody> call = connectToApi.grabConversion(currency.getBaseCurrency(), currency.getToCurrency());
+                call.enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        if (response.isSuccessful()) {
+                            StringBuilder sb = new StringBuilder();
+                            try {
+                                BufferedReader br = new BufferedReader(new InputStreamReader(response.body().byteStream()));
+                                for (String temp; ((temp = br.readLine()) != null); ) {
+                                    sb.append(temp);
+                                }
+                                HashMap<String, String> conv = Jsonhelper.getValue(sb.toString());
+                                currency.setAmount(conv.get(currency.getToCurrency()));
+                                amount.setText(String.format("%s %s", currency.getToCurrency(), conv.get(currency.getToCurrency())));
+                            } catch (Exception io) {
+                                io.printStackTrace();
+                            }
+                        }
+                    }
 
-            //if (from.contains("Bitcoin")) { icon.setImageResource(R.drawable.btc_logo); from = "BTC";}
-            //else if (from.contains("Ethereum")) {icon.setImageResource(R.drawable.eth_logo); from = "ETH";}
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        t.printStackTrace();
+                    }
+                });
+            }
         }
 
         @Override
         public void onClick(View view) {
-            Crypto card = currencies.get(getAdapterPosition());
+            Crypto card = items.get(getAdapterPosition());
             if(card == null) return;
 
             if (mOnClickListener != null){
-                if (view.getId() == R.id.close) {
-                    mOnClickListener.onCloseClick(getAdapterPosition());
-                } else {
-                    mOnClickListener.onCardClick(card);
-                }
+                if (view.getId() == R.id.close) mOnClickListener.onCardCloseClick(card);
+                else mOnClickListener.onCardClick(card);
            }
-
         }
+
     }
+
 }

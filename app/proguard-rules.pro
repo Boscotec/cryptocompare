@@ -23,3 +23,27 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Retrofit 2 Proguard Rules
+# Platform calls Class.forName on types which do not exist on Android to determine platform.
+-dontnote retrofit2.Platform
+# Platform used when running on Java 8 VMs. Will not be used at runtime.
+-dontwarn retrofit2.Platform$Java8
+# Retain generic type information for use by reflection by converters and adapters.
+-keepattributes Signature
+# Retain declared checked exceptions for use by a Proxy instance.
+-keepattributes Exceptions
+
+# retrofit 2 Proguard rule from stackOverFlow
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
+-keepclasseswithmembers interface * {
+    @retrofit2.http.* <methods>;
+}
+
+#Okio Proguard Rules: Retrofit 2 uses Okio that is the reason
+-dontwarn okio.**

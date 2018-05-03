@@ -12,11 +12,11 @@ import java.util.Iterator;
  */
 
 public class Jsonhelper {
-    public static HashMap<String, String> getValue(Object content) throws IOException, JSONException {
+    public static HashMap<String, String> getValue(Object content) throws /* IOException,*/ JSONException {
         HashMap<String, String> hashMap = null;
 
-         if (content instanceof JSONObject) {
-            JSONObject jsonObject = (JSONObject) content;
+         if (content instanceof String) {
+            JSONObject jsonObject = new JSONObject(content.toString());
             hashMap = new HashMap<>();
 
             Iterator<String> iterator = jsonObject.keys();

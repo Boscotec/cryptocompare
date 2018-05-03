@@ -8,11 +8,17 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.TypedValue;
@@ -23,7 +29,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.boscotec.crypyocompare.BuildConfig;
 import com.boscotec.crypyocompare.adapter.CurrencyCardAdapter;
 import com.boscotec.crypyocompare.model.Crypto;
 import com.boscotec.crypyocompare.utils.Jsonhelper;
@@ -34,11 +39,11 @@ import com.boscotec.crypyocompare.utils.Utils;
 import com.getkeepsafe.taptargetview.TapTarget;
 import com.getkeepsafe.taptargetview.TapTargetSequence;
 
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+
+import java.util.Arrays;
 import java.util.HashMap;
 
 import okhttp3.ResponseBody;
@@ -47,17 +52,17 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 
-public class MainActivity extends AppCompatActivity implements CreateCard.CardClickListener,
-        View.OnClickListener, CurrencyCardAdapter.ItemClickListener {
+public class MainActivity extends AppCompatActivity
+        implements CreateCard.CardClickListener, CurrencyCardAdapter.ItemClickListener, LoaderManager.LoaderCallbacks<ArrayList<Crypto>> {
 
-    RecyclerView recyclerView;
-    CurrencyCardAdapter adapter;
-    SharedPreferences sharedPref = null;
-    SharedPreferences.Editor editor = null;
-    ArrayList<Crypto> currencies;
-    CreateCard createCard;
-    FloatingActionButton fab;
-    Toolbar toolbar;
+    private CurrencyCardAdapter adapter;
+    private FloatingActionButton fab;
+    private Toolbar toolbar;
+    private SharedPreferences sharedPref = null;
+    private static final int LOADER_ID = 1234;
+    private static final String prefSaved = "prefSaved";
+    private static final String prefFirstTime = "prefFirstTime";
+    private CreateCard createCard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,47 +71,130 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
 
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if(getSupportActionBar()!=null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         createCard = findViewById(R.id.createcard);
         createCard.setOnCardClickListener(this);
 
         sharedPref = getSharedPreferences(getString(R.string.shared_pref_cryptocompare), Context.MODE_PRIVATE);
-        editor = sharedPref.edit();
-        currencies = new ArrayList<>();
+
         adapter = new CurrencyCardAdapter(this, this);
 
-        fab = findViewById(R.id.fab);
-        fab.setOnClickListener(this);
-        recyclerView =  findViewById(R.id.recycler);
-        if(getApplicationContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        RecyclerView mRecyclerView =  findViewById(R.id.recycler);
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT){
+            mRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         } else{
-            recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+            mRecyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         }
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
-        recyclerView.setAdapter(adapter);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        mRecyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
+        mRecyclerView.setAdapter(adapter);
 
-        refresh();
+        fab = findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toggleCardView();
+            }
+        });
+
+        if(sharedPref.getBoolean(prefFirstTime, true)){
+            teachApp();
+            sharedPref.edit().putBoolean(prefFirstTime, false).apply();
+        }
     }
 
     @Override
-    public void onCloseClick(int close) {
-    /*    Timber.d("Clicked on: %s", close);
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        for (int i = 0; i < all_saved; i++) {
-            if (sharedPref.getString("saved_" + i, BuildConfig.FLAVOR).equals(currencies.get(close))) {
-                currencies.remove(close);
-                editor.remove("saved_" + i);
-                editor.putInt("num_saved", all_saved - 1);
-                editor.commit();
-                Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show();
-                refresh();
-                break;
-            }
+    public void onResume(){
+        getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+        super.onResume();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        hideCard();
+    }
+
+    private void toggleCardView(){
+        if(createCard.getVisibility() == View.VISIBLE){
+           hideCard();
+        }else{
+           createCard.setVisibility(View.VISIBLE);
+           fab.setImageResource(R.drawable.ic_clear_white);
         }
-        */
+    }
+
+    private void hideCard(){
+        createCard.setVisibility(View.GONE);
+        fab.setImageResource(R.drawable.ic_add);
+    }
+
+    public boolean saveCardToDb(Crypto card) {
+        Timber.d("saving perform on card: %s to %s", card.getBaseCurrency(), card.getToCurrency());
+
+        String[] array = TextUtils.split(sharedPref.getString(prefSaved, ""), "=");
+        ArrayList<String> arrayToList = new ArrayList<>(Arrays.asList(array));
+        arrayToList.add(card.toString());
+        String[] sarray =  arrayToList.toArray(new String[arrayToList.size()]);
+        return sharedPref.edit().putString(prefSaved, TextUtils.join("=", sarray)).commit();
+    }
+
+    public ArrayList<Crypto> getCardFromDb(){
+        String[] array = TextUtils.split(sharedPref.getString(prefSaved, ""), "=");
+        ArrayList<String> arrayToList = new ArrayList<>(Arrays.asList(array));
+
+        ArrayList<Crypto> items = new ArrayList<>();
+        for (String s : arrayToList) {
+            String currencies = s.split("%")[0];
+            int image = Integer.valueOf(s.split("%")[1]);
+            String baseCurrency = currencies.split(",")[0];
+            String toCurrency = currencies.split(",")[1];
+            items.add(new Crypto(baseCurrency, toCurrency, image));
+        }
+
+        return items;
+    }
+
+    public boolean deleteCardFromDb(Crypto card) {
+        Timber.d("delete perform on card: %s to %s", card.getBaseCurrency(), card.getToCurrency());
+        String[] array = TextUtils.split(sharedPref.getString(prefSaved, ""), "=");
+        ArrayList<String> arrayToList = new ArrayList<>(Arrays.asList(array));
+
+        if (!arrayToList.contains(card.toString())) return false;
+
+        arrayToList.remove(card.toString());
+
+        String[] darray =  arrayToList.toArray(new String[arrayToList.size()]);
+        return sharedPref.edit().putString(prefSaved, TextUtils.join("=", darray)).commit();
+    }
+
+    public boolean checkIfExistsInDb(Crypto card) {
+        String[] array = TextUtils.split(sharedPref.getString(prefSaved, ""), "=");
+        ArrayList<String> arrayToList = new ArrayList<>(Arrays.asList(array));
+        return arrayToList.contains(card.toString());
+    }
+
+    @Override
+    public void onSaveClick(Crypto crypto) {
+        if(checkIfExistsInDb(crypto))  Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+
+        if(saveCardToDb(crypto)){
+            Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
+            toggleCardView();
+            getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+        }else{
+            Toast.makeText(getBaseContext(), "failed to save", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onCardCloseClick(Crypto card) {
+        if(deleteCardFromDb(card)) {
+            Toast.makeText(getBaseContext(), "delete successful", Toast.LENGTH_LONG).show();
+            getSupportLoaderManager().restartLoader(LOADER_ID, null, this);
+        }
     }
 
     @Override
@@ -117,36 +205,9 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
     }
 
     @Override
-    public void onResume(){
-        super.onResume();
-    }
-
-    @Override
-    public void onPause(){
-        super.onPause();
-        hideCard();
-    }
-
-    @Override
     public void onBackPressed(){
         super.onBackPressed();
         System.exit(0);
-    }
-
-    private void refresh(){
-        currencies.clear();
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        for(int i=0; i<all_saved; i++){
-           String s = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
-           String from = s.split(",")[0];
-           String to = s.split(",")[1];
-           currencies.add(new Crypto(to, "1000", Integer.valueOf(from)));
-        }
-        adapter.swapItems(currencies);
-
-        if(currencies.size() == 0){
-            teachApp();
-        }
     }
 
     @TargetApi(17)
@@ -188,88 +249,44 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         sequence.start();
     }
 
-    private void showCard(){
-        createCard.setVisibility(View.VISIBLE);
-        fab.setImageResource(R.drawable.ic_clear_white);
-    }
-
-    private void hideCard(){
-        createCard.setVisibility(View.GONE);
-        fab.setImageResource(R.drawable.ic_add);
-    }
-
     @Override
-    public void onRadioButtonClick(String from, String currency) {
-      convert(from, currency);
+    public void onRadioButtonClick(Crypto crypto) {
+        convert(crypto.getBaseCurrency(), crypto.getToCurrency());
     }
 
+    @NonNull
     @Override
-    public void onSaveClick(String from, String to, String amount) {
-        Timber.d("Onclick of button");
-        if(!checkIfExists(from, to)){
-            addCard(from, to, amount);
-        }else {
-            Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
-        }
-    }
+    public Loader<ArrayList<Crypto>> onCreateLoader(int id, @Nullable Bundle args) {
+        return new AsyncTaskLoader<ArrayList<Crypto>>(this) {
+            ArrayList<Crypto> mTaskData = null;
 
-    public void update(String from, String to, String amount){
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        for(int i=0; i<all_saved; i++){
-            String json = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
-            try {
-                JSONObject jsonObject = new JSONObject(json);
-                HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
-                if(conv.get("crypto").equals(from+to)){
-
-                    //return true;
-                    //update
-
-                }
-            }catch (Exception e){
-                e.printStackTrace();
+            @Override
+            protected void onStartLoading() {
+                if (mTaskData != null) { deliverResult(mTaskData); } // Delivers any previously loaded data immediately
+                else { forceLoad(); }  // Force a new load
             }
-        }
 
+            @Nullable
+            @Override
+            public ArrayList<Crypto> loadInBackground() {
+                return getCardFromDb();
+            }
 
+            public void deliverResult(ArrayList<Crypto> data) {
+                mTaskData = data;
+                super.deliverResult(data);
+            }
+        };
     }
 
     @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.fab:
-                if(createCard.getVisibility()==View.VISIBLE){hideCard();}
-                else{showCard();}
-                break;
-            default:break;
-        }
+    public void onLoadFinished(@NonNull Loader<ArrayList<Crypto>> loader, ArrayList<Crypto> data) {
+        adapter.swapItems(data);
     }
 
-    public boolean checkIfExists(String from, String to) {
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        for(int i=0; i<all_saved; i++){
-            String json = sharedPref.getString("saved_"+i, BuildConfig.FLAVOR);
-            try {
-                JSONObject jsonObject = new JSONObject(json);
-                HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
-                if(conv.get("crypto").equals(from+to)){
-                    return true;
-                }
-            }catch (Exception e){ e.printStackTrace();}
-        }
-        return false;
-    }
-
-    public void addCard(String from,  String to, String amount) {
-        String json = String.format("{\"crypto\":\"%s\", \"amount\":\"%s\"}", from+to, amount);
-
-        int all_saved = sharedPref.getInt("num_saved", 0);
-        editor.putInt("num_saved", all_saved+1);
-        editor.putString("saved_"+all_saved, json);
-        editor.commit();
-        Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
-        hideCard();
-        refresh();
+    @Override
+    public void onLoaderReset(@NonNull Loader<ArrayList<Crypto>> loader) {
+        adapter.swapItems(null);
     }
 
     private class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
@@ -331,21 +348,18 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
         return super.onOptionsItemSelected(item);
     }
 
-
-    public void convert(String from, final String to) {
+    public void convert(String baseCurrency, final String toCurrency) {
         if(!Utils.isOnline(this)) {
             Toast.makeText(this,"Data connectivity is OFF", Toast.LENGTH_SHORT).show();
+            createCard.setAmount(String.format("%s 0.00", toCurrency));
             return;
         }
 
-        if (from.contains("Bitcoin")) { from = "BTC";}
-        else if (from.contains("Ethereum")) { from = "ETH";}
-
         IApi connectToApi = ApiClient.getClient().create(IApi.class);
-        final Call<ResponseBody> call = connectToApi.grabConversion(from, to);
+        final Call<ResponseBody> call = connectToApi.grabConversion(baseCurrency, toCurrency);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(@NonNull Call<ResponseBody> call,@NonNull Response<ResponseBody> response) {
                  if(response.isSuccessful()){
                     StringBuilder sb = new StringBuilder();
                     try{
@@ -354,26 +368,22 @@ public class MainActivity extends AppCompatActivity implements CreateCard.CardCl
                             sb.append(temp);
                         }
 
-                        JSONObject jsonObject = new JSONObject(sb.toString());
-                        HashMap<String, String> conv = Jsonhelper.getValue(jsonObject);
-
-                        Toast.makeText(MainActivity.this, to+" "+ conv.get(to), Toast.LENGTH_LONG).show();
-
-                        createCard.setAmount(conv.isEmpty()? String.format("%s 0.00", to) : conv.get(to));
-                                /* String.format("%s %s", to, conv.get(to)) */
+                        HashMap<String, String> conv = Jsonhelper.getValue(sb.toString());
+                        createCard.setAmount(conv.isEmpty()? String.format("%s 0.00", toCurrency) : String.format("%s %s", toCurrency, conv.get(toCurrency)));
                     }catch (Exception io){
                         io.printStackTrace();
+                        createCard.setAmount(String.format("%s 0.00", toCurrency));
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            public void onFailure(@NonNull Call<ResponseBody> call,@NonNull Throwable t) {
                 t.printStackTrace();
+                createCard.setAmount(String.format("%s 0.00", toCurrency));
             }
         });
 
     }
-
 
 }
