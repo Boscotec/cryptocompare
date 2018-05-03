@@ -62,8 +62,6 @@ public class CurrencyCardAdapter extends RecyclerView.Adapter<CurrencyCardAdapte
         if(items != null) items.clear();
         items = newItems;
 
-        //Toast.makeText(context, String.valueOf(newItems.size()), Toast.LENGTH_SHORT).show();
-
        // Force the RecyclerView to refresh
         this.notifyDataSetChanged();
     }

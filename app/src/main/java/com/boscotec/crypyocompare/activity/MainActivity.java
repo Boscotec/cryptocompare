@@ -178,7 +178,10 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSaveClick(Crypto crypto) {
-        if(checkIfExistsInDb(crypto))  Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+        if(checkIfExistsInDb(crypto)) {
+            Toast.makeText(getBaseContext(), "This card already exists!", Toast.LENGTH_LONG).show();
+            return;
+        }
 
         if(saveCardToDb(crypto)){
             Toast.makeText(getBaseContext(), "save successful", Toast.LENGTH_LONG).show();
